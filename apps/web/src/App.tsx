@@ -13,8 +13,17 @@ import { MonitorView } from "./views/MonitorView";
 
 const REFRESH_MS = 30_000;
 
+function viewFromHash(): AppView | null {
+  const hash = window.location.hash.replace(/^#/, "");
+  if (hash === "gateway") return "gateway";
+  if (hash === "dashboard") return "dashboard";
+  if (hash === "developer") return "developer";
+  if (hash === "monitor") return "monitor";
+  return null;
+}
+
 export default function App() {
-  const [view, setView] = useState<AppView>("landing");
+  const [view, setView] = useState<AppView>(() => viewFromHash() || "landing");
   const [data, setData] = useState<DashboardPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,18 +47,36 @@ export default function App() {
     return () => window.clearInterval(timer);
   }, [load]);
 
+  useEffect(() => {
+    const onHash = () => {
+      const next = viewFromHash();
+      if (next) setView(next);
+    };
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
+
+  const navigate = useCallback((next: AppView) => {
+    setView(next);
+    if (next === "landing") {
+      history.replaceState(null, "", window.location.pathname + window.location.search);
+    } else {
+      history.replaceState(null, "", `${window.location.pathname}${window.location.search}#${next}`);
+    }
+  }, []);
+
   return (
     <div className="app">
-      <Navbar view={view} onNavigate={setView} />
+      <Navbar view={view} onNavigate={navigate} />
 
       {view === "landing" && (
         <>
           <Hero
             summary={data?.market.summary}
             loading={loading}
-            onEnterDashboard={() => setView("dashboard")}
-            onEnterDeveloper={() => setView("developer")}
-            onEnterGateway={() => setView("gateway")}
+            onEnterDashboard={() => navigate("dashboard")}
+            onEnterDeveloper={() => navigate("developer")}
+            onEnterGateway={() => navigate("gateway")}
           />
           {data?.market.tokens.length ? <TickerBar tokens={data.market.tokens} /> : null}
           <FeatureSection />

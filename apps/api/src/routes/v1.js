@@ -3,6 +3,7 @@ import { getDeepIntel, getMarketOverview, getMonitorFeed } from "../lib/aggregat
 import { cached } from "../lib/cache.js";
 import { getGatewayConfig } from "../lib/gateway-key.js";
 import { claimFreeViaOnchainos, getOnchainosWalletStatus } from "../lib/gateway-onchainos.js";
+import { buildGatewayMobileLinks } from "../lib/gateway-mobile.js";
 import { DEFAULT_FOCUS } from "../lib/watchlist.js";
 import { requireApiKey, validateApiKeyAsync } from "../middleware/auth.js";
 import { rateLimitMiddleware } from "../middleware/rate-limit.js";
@@ -22,6 +23,18 @@ function withMeta(req, start, cache = { hit: false, ttl: 0 }) {
 router.get("/gateway/config", async (_req, res) => {
   try {
     const data = await getGatewayConfig();
+    res.json({ success: true, data });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+router.get("/gateway/mobile-links", (req, res) => {
+  try {
+    const host = req.query.host || req.headers["x-forwarded-host"] || req.headers.host?.split(":")[0] || "localhost";
+    const port = Number(req.query.port) || 5173;
+    const protocol = req.query.protocol || (req.secure ? "https" : "http");
+    const data = buildGatewayMobileLinks({ host: String(host).split(":")[0], port, protocol });
     res.json({ success: true, data });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { GatewayMobileQr } from "../components/GatewayMobileQr";
 import {
   ERC20_ABI,
   GATEWAY_ABI,
@@ -251,6 +252,7 @@ export function GatewayView() {
                   <button type="button" className="btn btn--primary" onClick={connect} disabled={loading}>
                     {loading ? "连接中…" : "连接钱包"}
                   </button>
+                  <GatewayMobileQr />
                 </>
               ) : showAgentWallet ? (
                 <>
@@ -269,16 +271,18 @@ export function GatewayView() {
                   <p className="muted gateway-wallet__subhint mono">
                     {onchainos.address}
                   </p>
+                  <GatewayMobileQr />
                 </>
               ) : (
                 <>
                   <p className="muted gateway-wallet__hint">
-                    未检测到浏览器钱包。若你使用 onchainos，请先在终端登录：
+                    未检测到浏览器钱包。可用手机 OKX Wallet 扫码连接，或在终端登录 onchainos。
                   </p>
+                  <GatewayMobileQr />
                   <pre className="code-panel__body gateway-curl" style={{ textAlign: "left", margin: "12px 0" }}>
                     <code>onchainos wallet login</code>
                   </pre>
-                  <p className="muted">或安装 <a href="https://www.okx.com/web3" target="_blank" rel="noreferrer" style={{ color: "var(--accent)" }}>OKX Wallet 扩展</a> 后刷新页面。</p>
+                  <p className="muted">也可安装 <a href="https://www.okx.com/web3" target="_blank" rel="noreferrer" style={{ color: "var(--accent)" }}>OKX Wallet 扩展</a> 后刷新。</p>
                   <button type="button" className="btn btn--ghost" onClick={connect} disabled={loading}>
                     仍要尝试连接
                   </button>
