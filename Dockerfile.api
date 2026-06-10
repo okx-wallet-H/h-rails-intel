@@ -1,0 +1,11 @@
+FROM node:20-alpine
+WORKDIR /app
+COPY package.json package-lock.json* ./
+COPY apps/api/package.json apps/api/
+COPY packages/types/package.json packages/types/
+RUN npm install --workspace @h-rails/api --workspace @h-rails/types
+COPY apps/api apps/api
+COPY packages/types packages/types
+ENV PORT=3847
+EXPOSE 3847
+CMD ["npm", "run", "start", "-w", "@h-rails/api"]
