@@ -3,7 +3,9 @@ import express from "express";
 import { config } from "dotenv";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
+import { cacheBackend } from "./lib/cache.js";
 import * as okx from "./lib/okx.js";
+import { getContractAddress } from "./lib/gateway-key.js";
 import v1Routes from "./routes/v1.js";
 import x402Routes from "./routes/x402.js";
 
@@ -25,7 +27,9 @@ app.get("/api/health", (_req, res) => {
     protocol: "Agent Payments Protocol",
     network: "X Layer (eip155:196)",
     okxConfigured: okx.hasOkxKeys(),
-    version: "0.1.0",
+    cache: cacheBackend(),
+    gatewayContract: getContractAddress(),
+    version: "0.2.0",
   });
 });
 

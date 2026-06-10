@@ -1,26 +1,38 @@
 import { Router } from "express";
 import { getDeepIntel, getMarketOverview, getMonitorFeed } from "../lib/aggregator.js";
+import { cached } from "../lib/cache.js";
+import { getGatewayConfig } from "../lib/gateway-key.js";
 import { DEFAULT_FOCUS } from "../lib/watchlist.js";
-import { requireApiKey, validateApiKey } from "../middleware/auth.js";
+import { requireApiKey, validateApiKeyAsync } from "../middleware/auth.js";
 import { rateLimitMiddleware } from "../middleware/rate-limit.js";
 
 const router = Router();
 const gated = [requireApiKey, rateLimitMiddleware];
 
-function withMeta(req, start) {
+function withMeta(req, start, cache = { hit: false, ttl: 0 }) {
   return {
     plan: req.meta?.plan || "public",
-    cached: false,
-    ttl: 0,
+    cached: cache.hit,
+    ttl: cache.ttl,
     latencyMs: Date.now() - start,
   };
 }
 
+router.get("/gateway/config", async (_req, res) => {
+  try {
+    const data = await getGatewayConfig();
+    res.json({ success: true, data });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
 router.get("/market/overview", ...gated, async (req, res) => {
   const start = Date.now();
+  const ttl = 30;
   try {
-    const data = await getMarketOverview();
-    res.json({ success: true, data, meta: withMeta(req, start) });
+    const { value: data, hit } = await cached("v1:market:overview", getMarketOverview, ttl);
+    res.json({ success: true, data, meta: withMeta(req, start, { hit, ttl }) });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
   }
@@ -28,9 +40,15 @@ router.get("/market/overview", ...gated, async (req, res) => {
 
 router.get("/token/:chain/:address", ...gated, async (req, res) => {
   const start = Date.now();
+  const ttl = 20;
+  const key = `v1:token:${req.params.chain}:${req.params.address.toLowerCase()}`;
   try {
-    const data = await getDeepIntel(req.params.chain, req.params.address);
-    res.json({ success: true, data, meta: withMeta(req, start) });
+    const { value: data, hit } = await cached(
+      key,
+      () => getDeepIntel(req.params.chain, req.params.address),
+      ttl,
+    );
+    res.json({ success: true, data, meta: withMeta(req, start, { hit, ttl }) });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
   }
@@ -38,9 +56,15 @@ router.get("/token/:chain/:address", ...gated, async (req, res) => {
 
 router.get("/monitor/:chain", ...gated, async (req, res) => {
   const start = Date.now();
+  const ttl = 15;
+  const key = `v1:monitor:${req.params.chain}`;
   try {
-    const data = await getMonitorFeed(req.params.chain);
-    res.json({ success: true, data, meta: withMeta(req, start) });
+    const { value: data, hit } = await cached(
+      key,
+      () => getMonitorFeed(req.params.chain),
+      ttl,
+    );
+    res.json({ success: true, data, meta: withMeta(req, start, { hit, ttl }) });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
   }
@@ -66,10 +90,14 @@ router.get("/dashboard", async (_req, res) => {
   }
 });
 
-router.get("/key/validate", (req, res) => {
-  const keyInfo = validateApiKey(req.headers["x-api-key"]);
-  if (!keyInfo) return res.status(401).json({ success: false, error: "无效的 API Key" });
-  res.json({ success: true, data: { plan: keyInfo.plan, name: keyInfo.name } });
+router.get("/key/validate", async (req, res) => {
+  try {
+    const keyInfo = await validateApiKeyAsync(req.headers["x-api-key"]);
+    if (!keyInfo) return res.status(401).json({ success: false, error: "无效的 API Key" });
+    res.json({ success: true, data: { plan: keyInfo.plan, name: keyInfo.name } });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
 });
 
 router.get("/focus", (_req, res) => {

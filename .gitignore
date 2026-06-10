@@ -8,3 +8,6 @@ dist/
 coverage/
 .turbo/
 apps/web/dist/
+contracts/out/
+contracts/cache/
+contracts/broadcast/

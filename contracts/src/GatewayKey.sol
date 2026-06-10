@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-/// @title Dolphin Gateway Key — API Key NFT for Market Data Gateway
+/// @title H Rails Gateway Key — API Key NFT for Market Data Gateway
 /// @notice Mint an NFT to get an API key. NFT holds plan tier metadata.
 contract GatewayKey is ERC721, Ownable, ReentrancyGuard {
     // ── State ──
@@ -40,7 +40,7 @@ contract GatewayKey is ERC721, Ownable, ReentrancyGuard {
     constructor(
         address _usdg,
         address _usdt
-    ) ERC721("Dolphin Gateway Key", "DGK") Ownable(msg.sender) {
+    ) ERC721("H Rails Gateway Key", "HRGK") Ownable(msg.sender) {
         usdg = IERC20(_usdg);
         usdt = IERC20(_usdt);
     }

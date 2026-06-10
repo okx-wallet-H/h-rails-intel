@@ -1,6 +1,6 @@
 import { Logo } from "./Logo";
 
-export type AppView = "landing" | "dashboard" | "monitor" | "developer";
+export type AppView = "landing" | "dashboard" | "monitor" | "developer" | "gateway";
 
 interface Props {
   view: AppView;
@@ -31,6 +31,7 @@ export function Navbar({ view, onNavigate }: Props) {
           {link("dashboard", "仪表盘")}
           {link("monitor", "链上监控")}
           {link("developer", "开发者")}
+          {link("gateway", "获取 Key")}
         </nav>
 
         <div className="nav-actions">

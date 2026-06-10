@@ -8,6 +8,7 @@ import { TickerBar } from "./components/TickerBar";
 import type { DashboardPayload } from "./types";
 import { DashboardView } from "./views/DashboardView";
 import { DeveloperView } from "./views/DeveloperView";
+import { GatewayView } from "./views/GatewayView";
 import { MonitorView } from "./views/MonitorView";
 
 const REFRESH_MS = 30_000;
@@ -69,6 +70,7 @@ export default function App() {
 
       {view === "monitor" && data && <MonitorView feed={data.monitor} />}
       {view === "developer" && <DeveloperView />}
+      {view === "gateway" && <GatewayView />}
 
       <Footer />
     </div>

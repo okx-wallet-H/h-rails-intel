@@ -27,6 +27,7 @@ npm run dev
 | `GET /api/v1/token/:chain/:address` | `x-api-key` | Deep intel for a token |
 | `GET /api/v1/monitor/:chain` | `x-api-key` | On-chain monitor feed |
 | `GET /api/v1/key/validate` | `x-api-key` | Validate key and plan |
+| `GET /api/v1/gateway/config` | — | Gateway contract + pricing config |
 | `GET /api/x402/premium/deep-intel` | x402 payment | Premium intel (402 without signature) |
 | `POST /api/x402/auto-pay-demo` | — | Auto 402 → sign → replay demo |
 
@@ -40,7 +41,20 @@ Default dev key when unset: `gw-dev-key-001` (Pro).
 curl -H "x-api-key: gw-dev-key-001" http://localhost:3847/api/v1/market/overview
 ```
 
-Wallet addresses (`0x…`) are accepted as free-tier keys (placeholder until on-chain GatewayKey integration).
+Wallet addresses (`0x…`) are validated on-chain when `GATEWAY_CONTRACT_ADDRESS` is set; otherwise accepted as free-tier keys.
+
+### On-chain GatewayKey (Phase 2)
+
+```bash
+# Deploy to X Layer
+export DEPLOYER_PRIVATE_KEY=0x...
+npm run deploy:gateway
+
+# Then set in .env
+GATEWAY_CONTRACT_ADDRESS=0x...
+```
+
+Web UI: open **获取 Key** tab to connect wallet, claim Free, or purchase Pro with USDT.
 
 ### x402 demo
 

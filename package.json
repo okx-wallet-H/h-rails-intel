@@ -11,7 +11,8 @@
     "dev": "concurrently -n api,web -c cyan,magenta \"npm run dev -w @h-rails/api\" \"npm run dev -w @h-rails/web\"",
     "build": "npm run build -w @h-rails/web",
     "start": "npm run start -w @h-rails/api",
-    "lint": "npm run lint -w @h-rails/web"
+    "lint": "npm run lint -w @h-rails/web",
+    "deploy:gateway": "cd contracts && forge script script/DeployGatewayKey.s.sol --rpc-url ${XLAYER_RPC_URL:-https://rpc.xlayer.tech} --broadcast"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
