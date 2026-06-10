@@ -9,9 +9,9 @@ export function ApiSection() {
             通过标准 HTTP 接口获取批量价格与 K 线数据。支持 x402 微支付协议，按调用付费，无需复杂鉴权流程。
           </p>
           <ul className="api-list">
-            <li>GET /api/market — 批量行情与 24h 指标</li>
-            <li>GET /api/kline — K 线 / OHLC 数据</li>
-            <li>多链格式：chainIndex:contractAddress</li>
+            <li>GET /api/v1/market/overview — 市场概览</li>
+            <li>GET /api/v1/token/:chain/:address — 深度情报</li>
+            <li>GET /api/x402/premium/deep-intel — x402 按次付费</li>
           </ul>
           <button type="button" className="btn btn--primary">
             获取 API Key
@@ -25,23 +25,15 @@ export function ApiSection() {
             <span>Python</span>
           </div>
           <pre className="code-panel__body">
-            <code>{`# H Rails Market API
-curl https://api.hrails.io/v1/market/prices \\
-  -H "Content-Type: application/json" \\
-  -d '[{
-    "chainIndex": 501,
-    "tokenContractAddress":
-    "So11111111111111111111111111111111111111112"
-  }]'
+            <code>{`# H Rails Gateway v1
+curl http://localhost:3847/api/v1/market/overview \\
+  -H "x-api-key: gw-dev-key-001"
 
 # Response
 {
-  "code": "0",
-  "data": [{
-    "price": "64.49",
-    "chainIndex": "501",
-    "symbol": "SOL"
-  }]
+  "success": true,
+  "data": { "tokens": [...], "signals": [...] },
+  "meta": { "plan": "pro", "latencyMs": 842 }
 }`}</code>
           </pre>
         </div>
