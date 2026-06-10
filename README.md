@@ -47,11 +47,32 @@ Wallet addresses (`0x…`) are validated on-chain when `GATEWAY_CONTRACT_ADDRESS
 
 | Item | Value |
 |------|-------|
-| Contract | `0x1d27BcB08d77f7f7BC4BF98241c67F4569472BB1` |
-| Explorer | https://www.okx.com/explorer/xlayer/address/0x1d27BcB08d77f7f7BC4BF98241c67F4569472BB1 |
+| Contract (V2) | `0xc8F599633fCCaDc472c49a307C30BEad918e36Fa` |
+| Explorer | https://www.okx.com/explorer/xlayer/address/0xc8F599633fCCaDc472c49a307C30BEad918e36Fa |
+| V1 (legacy) | `0x1d27BcB08d77f7f7BC4BF98241c67F4569472BB1` |
 | RPC | `https://xlayerrpc.okx.com` |
 
-Web UI: **获取 Key** → connect X Layer wallet → claim Free or buy Pro with USDT.
+Web UI: **获取 Key** → onchainos Agent Wallet 自动识别 → 领取 Free / 升级 Pro。
+
+### Agent 监控简报
+
+```bash
+HRAILS_API_KEY=0x你的地址 npm run agent:brief
+npm run agent:watch   # 每 5 分钟刷新
+```
+
+### x402 自动付费（Agent Wallet）
+
+```bash
+curl -X POST http://localhost:3847/api/v1/x402/auto-pay
+```
+
+### 生产部署
+
+```bash
+npm run deploy:prod          # Docker: API + Nginx Web + Redis → :8080
+fly deploy                   # 仅 API（需 flyctl + fly.toml）
+```
 
 ```bash
 # Local full stack (Anvil fork + Redis + dev)

@@ -2,7 +2,7 @@ import { Router } from "express";
 import { getDeepIntel, getMarketOverview, getMonitorFeed } from "../lib/aggregator.js";
 import { cached } from "../lib/cache.js";
 import { getGatewayConfig } from "../lib/gateway-key.js";
-import { claimFreeViaOnchainos, getOnchainosWalletStatus } from "../lib/gateway-onchainos.js";
+import { claimFreeViaOnchainos, getOnchainosWalletStatus, purchaseProViaOnchainos } from "../lib/gateway-onchainos.js";
 
 import { DEFAULT_FOCUS } from "../lib/watchlist.js";
 import { requireApiKey, validateApiKeyAsync } from "../middleware/auth.js";
@@ -45,6 +45,67 @@ router.post("/gateway/claim-free-onchainos", async (req, res) => {
   } catch (e) {
     const status = e.message?.includes("未登录") ? 401 : 400;
     res.status(status).json({ success: false, error: e.message });
+  }
+});
+
+router.post("/gateway/purchase-pro-onchainos", async (req, res) => {
+  try {
+    const data = await purchaseProViaOnchainos(req.body?.address);
+    res.json({ success: true, data });
+  } catch (e) {
+    const status = e.message?.includes("未登录") ? 401 : 400;
+    res.status(status).json({ success: false, error: e.message });
+  }
+});
+
+router.post("/x402/auto-pay", async (req, res) => {
+  const port = process.env.PORT || 3847;
+  const host = req.get("host")?.includes("localhost") ? `localhost:${port}` : req.get("host");
+  const protocol = req.protocol;
+  const chain = req.body?.chain;
+  const address = req.body?.address;
+  const qs = new URLSearchParams();
+  if (chain) qs.set("chain", chain);
+  if (address) qs.set("address", address);
+  const target = `${protocol}://${host}/api/x402/premium/deep-intel${qs.toString() ? `?${qs}` : ""}`;
+
+  try {
+    const first = await fetch(target);
+    if (first.status !== 402) {
+      return res.json({ step: "free", data: await first.json() });
+    }
+    const { buildPaymentRequired, encodePaymentRequired, payWithOnchainos, PAYMENT_ACCEPTS } = await import("../lib/x402.js");
+    const { parsePaymentSignature, verifyX402Payment } = await import("../lib/x402-verify.js");
+
+    const paymentRequired = first.headers.get("payment-required")
+      ? JSON.parse(Buffer.from(first.headers.get("payment-required"), "base64").toString())
+      : await first.json();
+
+    const accepted = paymentRequired.accepts.find((a) => a.asset === PAYMENT_ACCEPTS[0].asset)
+      || paymentRequired.accepts[0];
+
+    const signed = await payWithOnchainos([accepted]);
+    const header = Buffer.from(JSON.stringify({
+      x402Version: 2,
+      resource: paymentRequired.resource,
+      accepted,
+      payload: signed,
+    })).toString("base64");
+
+    const second = await fetch(target, { headers: { "PAYMENT-SIGNATURE": header } });
+    const data = await second.json();
+
+    res.json({
+      success: second.ok,
+      steps: ["402 received", "Agent Wallet EIP-3009 signed", "request replayed", "signature verified"],
+      status: second.status,
+      data,
+      payer: signed.authorization?.from,
+      network: "X Layer",
+      protocol: "Agent Payments Protocol",
+    });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
   }
 });
 

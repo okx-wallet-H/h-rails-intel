@@ -64,6 +64,11 @@ export function getContractAddress() {
 const keyCache = new Map();
 const KEY_CACHE_MS = 60_000;
 
+export function invalidateKeyCache(address) {
+  if (address) keyCache.delete(address.toLowerCase());
+  else keyCache.clear();
+}
+
 /**
  * @param {string} address
  * @returns {Promise<import('@h-rails/types').GatewayKey | null>}

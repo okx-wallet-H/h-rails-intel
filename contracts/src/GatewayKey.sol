@@ -36,6 +36,7 @@ contract GatewayKey is ERC721, Ownable, ReentrancyGuard {
     event KeyPurchased(address indexed buyer, uint256 tokenId, Plan plan, string apiKeyHash);
     event KeyRevoked(uint256 tokenId);
     event KeyRenewed(uint256 tokenId, uint256 newExpiry);
+    event KeyUpgraded(address indexed holder, uint256 tokenId, Plan plan, uint256 expiresAt);
 
     constructor(
         address _usdg,
@@ -67,6 +68,34 @@ contract GatewayKey is ERC721, Ownable, ReentrancyGuard {
     function claimFree() external nonReentrant returns (uint256) {
         require(holderToken[msg.sender] == 0, "Already owns a key");
         return _mintKey(msg.sender, Plan.Free);
+    }
+
+    /// @notice Upgrade an existing Free key to Pro with USDT
+    function upgradeToProWithUSDT() external nonReentrant {
+        uint256 tokenId = holderToken[msg.sender];
+        require(tokenId != 0, "No key found");
+        KeyInfo storage info = keyInfo[tokenId];
+        require(info.plan == Plan.Free, "Not a free key");
+        require(info.active, "Key inactive");
+        usdt.transferFrom(msg.sender, owner(), proPriceUsdt);
+        info.plan = Plan.Pro;
+        info.purchasedAt = block.timestamp;
+        info.expiresAt = block.timestamp + MONTH;
+        emit KeyUpgraded(msg.sender, tokenId, Plan.Pro, info.expiresAt);
+    }
+
+    /// @notice Upgrade an existing Free key to Pro with USDG
+    function upgradeToProWithUSDG() external nonReentrant {
+        uint256 tokenId = holderToken[msg.sender];
+        require(tokenId != 0, "No key found");
+        KeyInfo storage info = keyInfo[tokenId];
+        require(info.plan == Plan.Free, "Not a free key");
+        require(info.active, "Key inactive");
+        usdg.transferFrom(msg.sender, owner(), proPriceUsdg);
+        info.plan = Plan.Pro;
+        info.purchasedAt = block.timestamp;
+        info.expiresAt = block.timestamp + MONTH;
+        emit KeyUpgraded(msg.sender, tokenId, Plan.Pro, info.expiresAt);
     }
 
     /// @notice Renew an existing key

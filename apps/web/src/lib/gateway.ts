@@ -85,6 +85,33 @@ export async function claimFreeOnchainos(address?: string) {
   return json.data as { address: string; txHash: string | null; orderId: string | null };
 }
 
+export async function purchaseProOnchainos(address?: string) {
+  const res = await fetch("/api/v1/gateway/purchase-pro-onchainos", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(address ? { address } : {}),
+  });
+  const json = await res.json();
+  if (!res.ok || !json.success) throw new Error(json.error || `HTTP ${res.status}`);
+  return json.data as {
+    address: string;
+    plan: string;
+    priceUsdt: string;
+    txs: Array<{ step: string; txHash: string | null }>;
+  };
+}
+
+export async function runX402AutoPay(body?: { chain?: string; address?: string }) {
+  const res = await fetch("/api/v1/x402/auto-pay", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body || {}),
+  });
+  const json = await res.json();
+  if (!res.ok && !json.steps) throw new Error(json.error || `HTTP ${res.status}`);
+  return json;
+}
+
 type WalletWindow = Window & {
   ethereum?: unknown;
   okxwallet?: { ethereum?: unknown };

@@ -3,6 +3,7 @@ import {
   GATEWAY_ABI,
   PLAN_LABELS,
   claimFreeOnchainos,
+  purchaseProOnchainos,
   fetchGatewayConfig,
   fetchOnchainosWalletStatus,
   publicClient,
@@ -61,6 +62,25 @@ export function GatewayView() {
   useEffect(() => {
     if (address && config?.contract) fetchKey(address, config.contract);
   }, [address, config?.contract, fetchKey]);
+
+  const upgradeToPro = async () => {
+    if (!agent?.loggedIn || !agent.address) {
+      setStatus("Agent Wallet 未登录");
+      return;
+    }
+    setLoading(true);
+    setStatus(null);
+    try {
+      const result = await purchaseProOnchainos(agent.address);
+      setAddress(result.address);
+      await fetchKey(result.address, config?.contract);
+      setStatus(`Pro 已激活 · ${result.priceUsdt} USDT/月 · 60 次/分钟`);
+    } catch (e) {
+      setStatus(e instanceof Error ? e.message : "升级失败");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const claimViaAgent = async () => {
     if (!agent?.loggedIn || !agent.address) {
@@ -167,6 +187,21 @@ export function GatewayView() {
                 <span className="muted">x-api-key（你的 Agent 钱包地址）</span>
                 <code>{address}</code>
               </div>
+              {Number(plan) === 0 ? (
+                <div style={{ marginTop: 16 }}>
+                  <p className="muted gateway-wallet__subhint">
+                    升级 Pro：{config?.pricing.proUsdt || "99"} USDT/月 · 60 次/分钟 · Agent Wallet 签名
+                  </p>
+                  <button
+                    type="button"
+                    className="btn btn--ghost"
+                    disabled={loading || !contractDeployed}
+                    onClick={upgradeToPro}
+                  >
+                    {loading ? "签名上链中…" : "升级 Pro"}
+                  </button>
+                </div>
+              ) : null}
             </div>
           ) : (
             <div>
