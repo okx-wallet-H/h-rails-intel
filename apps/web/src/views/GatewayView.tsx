@@ -3,11 +3,15 @@ import {
   ERC20_ABI,
   GATEWAY_ABI,
   PLAN_LABELS,
+  claimFreeOnchainos,
   fetchGatewayConfig,
+  fetchOnchainosWalletStatus,
   getEthereum,
+  hasBrowserWallet,
   publicClient,
   switchToXLayer,
   type GatewayConfig,
+  type OnchainosWalletStatus,
 } from "../lib/gateway";
 
 const ENDPOINTS = [
@@ -29,9 +33,20 @@ export function GatewayView() {
   const [activeEp, setActiveEp] = useState(0);
   const [playResp, setPlayResp] = useState<{ code: number; ms: number; body: unknown } | null>(null);
   const [playLoading, setPlayLoading] = useState(false);
+  const [browserWallet, setBrowserWallet] = useState(false);
+  const [onchainos, setOnchainos] = useState<OnchainosWalletStatus | null>(null);
 
   useEffect(() => {
     fetchGatewayConfig().then(setConfig).catch(() => setConfig(null));
+    setBrowserWallet(hasBrowserWallet());
+    fetchOnchainosWalletStatus()
+      .then((wallet) => {
+        setOnchainos(wallet);
+        if (wallet.loggedIn && wallet.address && !hasBrowserWallet()) {
+          setAddress(wallet.address);
+        }
+      })
+      .catch(() => setOnchainos({ loggedIn: false, address: null, email: null }));
   }, []);
 
   const fetchKey = useCallback(async (addr: string, contract?: string | null) => {
@@ -54,20 +69,23 @@ export function GatewayView() {
   }, [config?.contract]);
 
   useEffect(() => {
+    if (address) {
+      fetchKey(address, config?.contract);
+      return;
+    }
     const ethereum = getEthereum() as { request: (a: { method: string }) => Promise<string[]> } | undefined;
     if (!ethereum) return;
     ethereum.request({ method: "eth_accounts" }).then((addrs) => {
       if (addrs[0]) {
         setAddress(addrs[0]);
-        fetchKey(addrs[0], config?.contract);
       }
     }).catch(() => {});
-  }, [config?.contract, fetchKey]);
+  }, [config?.contract, fetchKey, address]);
 
   const connect = async () => {
     const ethereum = getEthereum() as { request: (a: { method: string }) => Promise<string[]> } | undefined;
     if (!ethereum) {
-      setStatus("请安装 MetaMask 或 OKX Wallet");
+      setStatus("未检测到浏览器钱包。你用的是 onchainos Agent 钱包，请用下方「Agent 钱包」方式领取。");
       return;
     }
     setLoading(true);
@@ -84,10 +102,49 @@ export function GatewayView() {
     }
   };
 
+  const useOnchainosWallet = () => {
+    if (!onchainos?.loggedIn || !onchainos.address) {
+      setStatus("onchainos 未登录。在终端运行: onchainos wallet login");
+      return;
+    }
+    setAddress(onchainos.address);
+    setStatus(`已绑定 Agent 钱包 ${onchainos.address.slice(0, 6)}…${onchainos.address.slice(-4)}`);
+  };
+
+  const claimViaOnchainos = async () => {
+    if (!onchainos?.loggedIn || !onchainos.address) {
+      setStatus("onchainos 未登录。在终端运行: onchainos wallet login");
+      return;
+    }
+    setLoading(true);
+    setStatus(null);
+    try {
+      const result = await claimFreeOnchainos(onchainos.address);
+      setAddress(result.address);
+      if (result.txHash) {
+        await publicClient.waitForTransactionReceipt({ hash: result.txHash as `0x${string}` });
+      }
+      await fetchKey(result.address, config?.contract);
+      setStatus("Free Key 已领取！钱包地址即为 x-api-key");
+    } catch (e) {
+      setStatus(e instanceof Error ? e.message : "领取失败");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const writeContract = async (functionName: "claimFree" | "purchaseWithUSDT" | "purchaseWithUSDG") => {
     const ethereum = getEthereum();
     const contract = config?.contract;
     if (!ethereum || !address || !contract) {
+      if (!browserWallet && onchainos?.loggedIn) {
+        if (functionName === "claimFree") {
+          await claimViaOnchainos();
+          return;
+        }
+        setStatus("购买 Pro 需要浏览器钱包扩展，或联系支持开通");
+        return;
+      }
       setStatus("合约尚未部署，暂无法链上购买");
       return;
     }
@@ -162,6 +219,7 @@ export function GatewayView() {
   const [tokenId, plan, , expiresAt, active] = keyData || [0n, 0, 0n, 0n, false];
   const hasKey = tokenId > 0n && active;
   const contractDeployed = Boolean(config?.contract);
+  const showAgentWallet = !browserWallet && onchainos?.loggedIn && onchainos.address;
 
   return (
     <div className="gateway-view">
@@ -187,10 +245,45 @@ export function GatewayView() {
           {!address ? (
             <div className="gateway-wallet__empty">
               <h3>连接 X Layer 钱包</h3>
-              <p className="muted">领取 Free Key 或购买 Pro 套餐</p>
-              <button type="button" className="btn btn--primary" onClick={connect} disabled={loading}>
-                {loading ? "连接中…" : "连接钱包"}
-              </button>
+              {browserWallet ? (
+                <>
+                  <p className="muted">使用 OKX Wallet 或 MetaMask 浏览器扩展</p>
+                  <button type="button" className="btn btn--primary" onClick={connect} disabled={loading}>
+                    {loading ? "连接中…" : "连接钱包"}
+                  </button>
+                </>
+              ) : showAgentWallet ? (
+                <>
+                  <p className="muted gateway-wallet__hint">
+                    onchainos Agent 钱包不会注入浏览器，因此「连接钱包」不会出现弹窗。
+                    你已登录 <strong>{onchainos.email}</strong>，可直接用 Agent 钱包领取。
+                  </p>
+                  <div className="gateway-wallet__actions">
+                    <button type="button" className="btn btn--primary" onClick={useOnchainosWallet} disabled={loading}>
+                      使用 Agent 钱包
+                    </button>
+                    <button type="button" className="btn btn--ghost" onClick={claimViaOnchainos} disabled={loading || !contractDeployed}>
+                      {loading ? "领取中…" : "一键领取 Free Key"}
+                    </button>
+                  </div>
+                  <p className="muted gateway-wallet__subhint mono">
+                    {onchainos.address}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="muted gateway-wallet__hint">
+                    未检测到浏览器钱包。若你使用 onchainos，请先在终端登录：
+                  </p>
+                  <pre className="code-panel__body gateway-curl" style={{ textAlign: "left", margin: "12px 0" }}>
+                    <code>onchainos wallet login</code>
+                  </pre>
+                  <p className="muted">或安装 <a href="https://www.okx.com/web3" target="_blank" rel="noreferrer" style={{ color: "var(--accent)" }}>OKX Wallet 扩展</a> 后刷新页面。</p>
+                  <button type="button" className="btn btn--ghost" onClick={connect} disabled={loading}>
+                    仍要尝试连接
+                  </button>
+                </>
+              )}
             </div>
           ) : hasKey ? (
             <div>
@@ -234,7 +327,7 @@ export function GatewayView() {
                 <button
                   type="button"
                   className="gateway-plan gateway-plan--pro"
-                  disabled={loading || !contractDeployed}
+                  disabled={loading || !contractDeployed || !browserWallet}
                   onClick={() => writeContract("purchaseWithUSDT")}
                 >
                   <strong>Pro</strong>
@@ -242,6 +335,9 @@ export function GatewayView() {
                   <em>{config?.pricing.proUsdt || "99"} USDT/月</em>
                 </button>
               </div>
+              {!browserWallet ? (
+                <p className="muted gateway-wallet__subhint">Agent 钱包可领 Free；购买 Pro 需浏览器扩展。</p>
+              ) : null}
             </div>
           )}
         </section>

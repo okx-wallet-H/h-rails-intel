@@ -60,8 +60,44 @@ export async function fetchGatewayConfig(): Promise<GatewayConfig> {
   return json.data;
 }
 
+export interface OnchainosWalletStatus {
+  loggedIn: boolean;
+  address: string | null;
+  email: string | null;
+  accountName?: string | null;
+}
+
+export async function fetchOnchainosWalletStatus(): Promise<OnchainosWalletStatus> {
+  const res = await fetch("/api/v1/gateway/wallet-status");
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const json = await res.json();
+  return json.data;
+}
+
+export async function claimFreeOnchainos(address?: string) {
+  const res = await fetch("/api/v1/gateway/claim-free-onchainos", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(address ? { address } : {}),
+  });
+  const json = await res.json();
+  if (!res.ok || !json.success) throw new Error(json.error || `HTTP ${res.status}`);
+  return json.data as { address: string; txHash: string | null; orderId: string | null };
+}
+
+type WalletWindow = Window & {
+  ethereum?: unknown;
+  okxwallet?: { ethereum?: unknown };
+};
+
+export function hasBrowserWallet() {
+  return Boolean(getEthereum());
+}
+
 export function getEthereum() {
-  return typeof window !== "undefined" ? (window as Window & { ethereum?: unknown }).ethereum : undefined;
+  if (typeof window === "undefined") return undefined;
+  const w = window as WalletWindow;
+  return w.okxwallet?.ethereum || w.ethereum;
 }
 
 export async function switchToXLayer() {

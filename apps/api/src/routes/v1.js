@@ -2,6 +2,7 @@ import { Router } from "express";
 import { getDeepIntel, getMarketOverview, getMonitorFeed } from "../lib/aggregator.js";
 import { cached } from "../lib/cache.js";
 import { getGatewayConfig } from "../lib/gateway-key.js";
+import { claimFreeViaOnchainos, getOnchainosWalletStatus } from "../lib/gateway-onchainos.js";
 import { DEFAULT_FOCUS } from "../lib/watchlist.js";
 import { requireApiKey, validateApiKeyAsync } from "../middleware/auth.js";
 import { rateLimitMiddleware } from "../middleware/rate-limit.js";
@@ -24,6 +25,25 @@ router.get("/gateway/config", async (_req, res) => {
     res.json({ success: true, data });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+router.get("/gateway/wallet-status", (_req, res) => {
+  try {
+    const data = getOnchainosWalletStatus();
+    res.json({ success: true, data });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+router.post("/gateway/claim-free-onchainos", async (req, res) => {
+  try {
+    const data = claimFreeViaOnchainos(req.body?.address);
+    res.json({ success: true, data });
+  } catch (e) {
+    const status = e.message?.includes("未登录") ? 401 : 400;
+    res.status(status).json({ success: false, error: e.message });
   }
 });
 
