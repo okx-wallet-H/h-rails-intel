@@ -13,6 +13,7 @@
     "start": "npm run start -w @h-rails/api",
     "lint": "npm run lint -w @h-rails/web",
     "deploy:gateway": "cd contracts && set -a && [ -f ../.env ] && . ../.env && set +a && forge script script/DeployGatewayKey.s.sol --rpc-url ${XLAYER_RPC_URL:-https://xlayerrpc.okx.com} --broadcast",
+    "verify:gateway": "bash scripts/verify-gateway.sh",
     "blast": "bash scripts/blast.sh",
     "agent:brief": "node scripts/agent-brief.mjs",
     "agent:watch": "node scripts/agent-brief.mjs --watch",

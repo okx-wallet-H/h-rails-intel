@@ -80,6 +80,9 @@ npm run blast
 
 # Redeploy to mainnet (requires DEPLOYER_PRIVATE_KEY in .env)
 npm run deploy:gateway
+
+# Verify on OKLink / OKX Explorer (requires OKLINK_API_KEY or OKX_ACCESS_KEY)
+npm run verify:gateway
 ```
 
 ### SDK
