@@ -12,7 +12,8 @@
     "build": "npm run build -w @h-rails/web",
     "start": "npm run start -w @h-rails/api",
     "lint": "npm run lint -w @h-rails/web",
-    "deploy:gateway": "cd contracts && forge script script/DeployGatewayKey.s.sol --rpc-url ${XLAYER_RPC_URL:-https://rpc.xlayer.tech} --broadcast"
+    "deploy:gateway": "cd contracts && forge script script/DeployGatewayKey.s.sol --rpc-url ${XLAYER_RPC_URL:-https://xlayerrpc.okx.com} --broadcast",
+    "blast": "bash scripts/blast.sh"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

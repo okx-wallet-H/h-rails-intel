@@ -9,8 +9,11 @@ contract DeployGatewayKey is Script {
     address constant USDT = 0x779Ded0c9e1022225f8E0630b35a9b54bE713736;
 
     function run() external returns (address deployed) {
-        uint256 deployerKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
-        vm.startBroadcast(deployerKey);
+        try vm.envUint("DEPLOYER_PRIVATE_KEY") returns (uint256 deployerKey) {
+            vm.startBroadcast(deployerKey);
+        } catch {
+            vm.startBroadcast();
+        }
 
         GatewayKey gateway = new GatewayKey(USDG, USDT);
         deployed = address(gateway);
