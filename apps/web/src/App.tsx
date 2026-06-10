@@ -49,6 +49,7 @@ export default function App() {
             loading={loading}
             onEnterDashboard={() => setView("dashboard")}
             onEnterDeveloper={() => setView("developer")}
+            onEnterGateway={() => setView("gateway")}
           />
           {data?.market.tokens.length ? <TickerBar tokens={data.market.tokens} /> : null}
           <FeatureSection />

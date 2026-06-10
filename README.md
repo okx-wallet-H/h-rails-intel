@@ -43,18 +43,35 @@ curl -H "x-api-key: gw-dev-key-001" http://localhost:3847/api/v1/market/overview
 
 Wallet addresses (`0x…`) are validated on-chain when `GATEWAY_CONTRACT_ADDRESS` is set; otherwise accepted as free-tier keys.
 
-### On-chain GatewayKey (Phase 2)
+### On-chain GatewayKey (X Layer Mainnet)
+
+| Item | Value |
+|------|-------|
+| Contract | `0x1d27BcB08d77f7f7BC4BF98241c67F4569472BB1` |
+| Explorer | https://www.okx.com/explorer/xlayer/address/0x1d27BcB08d77f7f7BC4BF98241c67F4569472BB1 |
+| RPC | `https://xlayerrpc.okx.com` |
+
+Web UI: **获取 Key** → connect X Layer wallet → claim Free or buy Pro with USDT.
 
 ```bash
-# Deploy to X Layer
-export DEPLOYER_PRIVATE_KEY=0x...
-npm run deploy:gateway
+# Local full stack (Anvil fork + Redis + dev)
+npm run blast
 
-# Then set in .env
-GATEWAY_CONTRACT_ADDRESS=0x...
+# Redeploy to mainnet (requires DEPLOYER_PRIVATE_KEY in .env)
+npm run deploy:gateway
 ```
 
-Web UI: open **获取 Key** tab to connect wallet, claim Free, or purchase Pro with USDT.
+### SDK
+
+```js
+import { createClient } from "@h-rails/sdk";
+
+const client = createClient({
+  baseUrl: "http://localhost:3847",
+  apiKey: "gw-dev-key-001", // or your 0x wallet address
+});
+const { data } = await client.marketOverview();
+```
 
 ### x402 demo
 

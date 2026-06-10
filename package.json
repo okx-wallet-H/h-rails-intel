@@ -12,7 +12,7 @@
     "build": "npm run build -w @h-rails/web",
     "start": "npm run start -w @h-rails/api",
     "lint": "npm run lint -w @h-rails/web",
-    "deploy:gateway": "cd contracts && forge script script/DeployGatewayKey.s.sol --rpc-url ${XLAYER_RPC_URL:-https://xlayerrpc.okx.com} --broadcast",
+    "deploy:gateway": "cd contracts && set -a && [ -f ../.env ] && . ../.env && set +a && forge script script/DeployGatewayKey.s.sol --rpc-url ${XLAYER_RPC_URL:-https://xlayerrpc.okx.com} --broadcast",
     "blast": "bash scripts/blast.sh"
   },
   "devDependencies": {

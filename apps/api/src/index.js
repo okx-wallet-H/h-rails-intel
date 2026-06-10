@@ -16,7 +16,7 @@ config({ path: resolve(__dirname, "../../.env") });
 const app = express();
 const PORT = Number(process.env.PORT || 3847);
 
-app.use(cors());
+app.use(cors({ exposedHeaders: ["PAYMENT-REQUIRED", "X-RateLimit-Remaining"] }));
 app.use(express.json());
 
 app.get("/api/health", (_req, res) => {

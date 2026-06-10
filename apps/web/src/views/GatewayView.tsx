@@ -287,18 +287,22 @@ export function GatewayView() {
       </div>
 
       <section className="panel panel--wide gateway-contract">
-        <h3>合约状态</h3>
-        <p className="muted">
-          {contractDeployed
-            ? <>GatewayKey 已部署: <code>{config?.contract}</code></>
-            : "合约尚未部署。运行 foundry 脚本后设置 GATEWAY_CONTRACT_ADDRESS 即可启用链上 Key。"}
-        </p>
-        {contractDeployed ? null : (
-          <pre className="code-panel__body" style={{ marginTop: "12px" }}>
-            <code>{`cd contracts
-export DEPLOYER_PRIVATE_KEY=0x...
-forge script script/DeployGatewayKey.s.sol --rpc-url https://rpc.xlayer.tech --broadcast`}</code>
-          </pre>
+        <h3>合约状态 · X Layer 主网</h3>
+        {contractDeployed ? (
+          <p className="muted">
+            GatewayKey: <code>{config?.contract}</code>
+            {" · "}
+            <a
+              href={`https://www.okx.com/explorer/xlayer/address/${config?.contract}`}
+              target="_blank"
+              rel="noreferrer"
+              style={{ color: "var(--accent)" }}
+            >
+              浏览器查看
+            </a>
+          </p>
+        ) : (
+          <p className="muted">合约地址加载中…</p>
         )}
       </section>
     </div>

@@ -6,6 +6,7 @@ interface HeroProps {
   loading: boolean;
   onEnterDashboard: () => void;
   onEnterDeveloper: () => void;
+  onEnterGateway?: () => void;
 }
 
 function formatVolume(value: number) {
@@ -14,7 +15,7 @@ function formatVolume(value: number) {
   return `$${value.toFixed(0)}`;
 }
 
-export function Hero({ summary, loading, onEnterDashboard, onEnterDeveloper }: HeroProps) {
+export function Hero({ summary, loading, onEnterDashboard, onEnterDeveloper, onEnterGateway }: HeroProps) {
   return (
     <section className="hero">
       <div className="hero__grid-bg" aria-hidden="true" />
@@ -41,6 +42,11 @@ export function Hero({ summary, loading, onEnterDashboard, onEnterDeveloper }: H
             <button type="button" className="btn btn--ghost btn--lg" onClick={onEnterDeveloper}>
               开发者文档
             </button>
+            {onEnterGateway ? (
+              <button type="button" className="btn btn--ghost btn--lg" onClick={onEnterGateway}>
+                获取 API Key
+              </button>
+            ) : null}
           </div>
           <div className="hero__tags">
             <span>x402 支付</span>

@@ -24,6 +24,8 @@ export function DeveloperView() {
           </ul>
           <p className="muted" style={{ marginTop: "1rem" }}>
             开发 Key: <code>gw-dev-key-001</code>（Pro，60 req/min）
+            <br />
+            主网合约: <code>0x1d27BcB08d77f7f7BC4BF98241c67F4569472BB1</code>
           </p>
         </section>
 
