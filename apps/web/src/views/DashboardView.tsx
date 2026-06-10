@@ -48,7 +48,7 @@ export function DashboardView({ data, loading, selected, onSelect }: Props) {
         selectedSymbol={selected}
         onSelect={onSelect}
       />
-      <TokenDetail token={token} />
+      <TokenDetail token={token} lastUpdate={data.market.summary.lastUpdate} />
     </div>
   );
 }

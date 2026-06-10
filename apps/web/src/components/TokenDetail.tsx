@@ -4,6 +4,7 @@ import { TokenIcon } from "./TokenIcon";
 
 interface TokenDetailProps {
   token?: TokenMarket;
+  lastUpdate?: number;
 }
 
 function formatVolume(value: number) {
@@ -12,7 +13,7 @@ function formatVolume(value: number) {
   return `$${value.toFixed(0)}`;
 }
 
-export function TokenDetail({ token }: TokenDetailProps) {
+export function TokenDetail({ token, lastUpdate }: TokenDetailProps) {
   if (!token) return null;
 
   return (
@@ -74,7 +75,7 @@ export function TokenDetail({ token }: TokenDetailProps) {
             <div>
               <span>更新时间</span>
               <strong className="mono">
-                {new Date(Number(token.updatedAt)).toLocaleTimeString("zh-CN")}
+                {lastUpdate ? new Date(lastUpdate).toLocaleTimeString("zh-CN") : "—"}
               </strong>
             </div>
           </div>
